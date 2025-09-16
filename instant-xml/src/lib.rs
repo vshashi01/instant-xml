@@ -14,6 +14,8 @@ pub use impls::{display_to_xml, from_xml_str, OptionAccumulator};
 pub mod ser;
 pub use ser::Serializer;
 
+use crate::de::DefaultDeserializer;
+
 pub trait ToXml {
     fn serialize<W: fmt::Write + ?Sized>(
         &self,
@@ -42,7 +44,7 @@ pub trait FromXml<'xml>: Sized {
     fn deserialize<'cx>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut Deserializer<'cx, 'xml>,
+        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
     ) -> Result<(), Error>;
 
     type Accumulator: Accumulate<Self>;
@@ -99,7 +101,7 @@ pub fn from_str<'xml, T: FromXml<'xml>>(input: &'xml str) -> Result<T, Error> {
     T::deserialize(
         &mut value,
         "<root element>",
-        &mut Deserializer::new(root, &mut context),
+        &mut DefaultDeserializer::new(root, &mut context),
     )?;
     value.try_done("<root element>")
 }

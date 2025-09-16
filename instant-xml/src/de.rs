@@ -7,7 +7,18 @@ use xmlparser::{ElementEnd, Token, Tokenizer};
 use crate::impls::CowStrAccumulator;
 use crate::{Error, Id};
 
-pub struct Deserializer<'cx, 'xml> {
+pub trait Deserializer<'cx, 'xml>: Iterator<Item = Result<Node<'xml>, Error>> {
+    fn take_str(&mut self) -> Result<Option<Cow<'xml, str>>, Error>;
+    fn nested<'a>(&'a mut self, element: Element<'xml>) -> Self
+    where
+        'cx: 'a;
+    fn ignore(&mut self) -> Result<(), Error>;
+    fn parent(&self) -> Id<'xml>;
+    fn element_id(&self, element: &Element<'xml>) -> Result<Id<'xml>, Error>;
+    fn attribute_id(&self, attr: &Attribute<'xml>) -> Result<Id<'xml>, Error>;
+}
+
+pub struct DefaultDeserializer<'cx, 'xml> {
     pub(crate) local: &'xml str,
     prefix: Option<&'xml str>,
     level: usize,
@@ -15,8 +26,8 @@ pub struct Deserializer<'cx, 'xml> {
     context: &'cx mut Context<'xml>,
 }
 
-impl<'cx, 'xml> Deserializer<'cx, 'xml> {
-    pub(crate) fn new(element: Element<'xml>, context: &'cx mut Context<'xml>) -> Self {
+impl<'cx, 'xml> DefaultDeserializer<'cx, 'xml> {
+pub(crate) fn new(element: Element<'xml>, context: &'cx mut Context<'xml>) -> Self {
         let level = context.stack.len();
         Self {
             local: element.local,
@@ -27,7 +38,25 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> {
         }
     }
 
-    pub fn take_str(&mut self) -> Result<Option<Cow<'xml, str>>, Error> {
+    pub fn for_node<'a: 'cx>(&'a mut self, node: Node<'xml>) -> DefaultDeserializer<'cx, 'xml>
+    where
+        'cx: 'a,
+    {
+        self.context.records.push_front(node);
+        Self {
+            local: self.local,
+            prefix: self.prefix,
+            level: self.level,
+            done: self.done,
+            context: self.context,
+        }
+    }
+}
+
+impl<'cx, 'xml> Deserializer<'cx, 'xml> for DefaultDeserializer<'cx, 'xml> {
+    
+
+    fn take_str(&mut self) -> Result<Option<Cow<'xml, str>>, Error> {
         loop {
             match self.next() {
                 Some(Ok(Node::AttributeValue(s))) => return Ok(Some(s)),
@@ -40,14 +69,13 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> {
         }
     }
 
-    pub fn nested<'a>(&'a mut self, element: Element<'xml>) -> Deserializer<'a, 'xml>
-    where
-        'cx: 'a,
+    fn nested<'a>(&'a mut self, element: Element<'xml>) -> DefaultDeserializer<'cx, 'xml> where 'cx:'a
     {
-        Deserializer::new(element, self.context)
+        //Self::new(element, self.context)
+        DefaultDeserializer { local: element.local, prefix: element.prefix, level: self.context.stack.len(), done: false, context: self.context }
     }
 
-    pub fn ignore(&mut self) -> Result<(), Error> {
+    fn ignore(&mut self) -> Result<(), Error> {
         loop {
             match self.next() {
                 Some(Err(e)) => return Err(e),
@@ -61,21 +89,9 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> {
         }
     }
 
-    pub fn for_node<'a>(&'a mut self, node: Node<'xml>) -> Deserializer<'a, 'xml>
-    where
-        'cx: 'a,
-    {
-        self.context.records.push_front(node);
-        Deserializer {
-            local: self.local,
-            prefix: self.prefix,
-            level: self.level,
-            done: self.done,
-            context: self.context,
-        }
-    }
+    
 
-    pub fn parent(&self) -> Id<'xml> {
+    fn parent(&self) -> Id<'xml> {
         Id {
             ns: match self.prefix {
                 Some(ns) => self.context.lookup(ns).unwrap(),
@@ -86,17 +102,17 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> {
     }
 
     #[inline]
-    pub fn element_id(&self, element: &Element<'xml>) -> Result<Id<'xml>, Error> {
+     fn element_id(&self, element: &Element<'xml>) -> Result<Id<'xml>, Error> {
         self.context.element_id(element)
     }
 
     #[inline]
-    pub fn attribute_id(&self, attr: &Attribute<'xml>) -> Result<Id<'xml>, Error> {
+     fn attribute_id(&self, attr: &Attribute<'xml>) -> Result<Id<'xml>, Error> {
         self.context.attribute_id(attr)
     }
 }
 
-impl<'xml> Iterator for Deserializer<'_, 'xml> {
+impl<'xml> Iterator for DefaultDeserializer<'_, 'xml> {
     type Item = Result<Node<'xml>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -354,7 +370,7 @@ impl<'xml> Iterator for Context<'xml> {
 pub fn borrow_cow_str<'a, 'xml: 'a>(
     into: &mut CowStrAccumulator<'xml, 'a>,
     field: &'static str,
-    deserializer: &mut Deserializer<'_, 'xml>,
+    deserializer: &mut DefaultDeserializer<'_, 'xml>,
 ) -> Result<(), Error> {
     if into.inner.is_some() {
         return Err(Error::DuplicateValue(field));
@@ -372,7 +388,7 @@ pub fn borrow_cow_str<'a, 'xml: 'a>(
 pub fn borrow_cow_slice_u8<'xml>(
     into: &mut Option<Cow<'xml, [u8]>>,
     field: &'static str,
-    deserializer: &mut Deserializer<'_, 'xml>,
+    deserializer: &mut DefaultDeserializer<'_, 'xml>,
 ) -> Result<(), Error> {
     if into.is_some() {
         return Err(Error::DuplicateValue(field));
