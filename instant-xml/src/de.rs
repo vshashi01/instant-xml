@@ -16,6 +16,9 @@ pub trait Deserializer<'cx, 'xml>: Iterator<Item = Result<Node<'xml>, Error>> {
     fn parent(&self) -> Id<'xml>;
     fn element_id(&self, element: &Element<'xml>) -> Result<Id<'xml>, Error>;
     fn attribute_id(&self, attr: &Attribute<'xml>) -> Result<Id<'xml>, Error>;
+    fn for_node<'a>(&'a mut self, node: Node<'xml>) -> Self
+    where
+        'cx: 'a;
 }
 
 pub struct DefaultDeserializer<'cx, 'xml> {
@@ -38,19 +41,7 @@ pub(crate) fn new(element: Element<'xml>, context: &'cx mut Context<'xml>) -> Se
         }
     }
 
-    pub fn for_node<'a: 'cx>(&'a mut self, node: Node<'xml>) -> DefaultDeserializer<'cx, 'xml>
-    where
-        'cx: 'a,
-    {
-        self.context.records.push_front(node);
-        Self {
-            local: self.local,
-            prefix: self.prefix,
-            level: self.level,
-            done: self.done,
-            context: self.context,
-        }
-    }
+    
 }
 
 impl<'cx, 'xml> Deserializer<'cx, 'xml> for DefaultDeserializer<'cx, 'xml> {
@@ -69,10 +60,10 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> for DefaultDeserializer<'cx, 'xml> {
         }
     }
 
-    fn nested<'a>(&'a mut self, element: Element<'xml>) -> DefaultDeserializer<'cx, 'xml> where 'cx:'a
+    fn nested<'a>(&'a mut self, element: Element<'xml>) -> DefaultDeserializer<'cx, 'xml> where 'cx: 'a
     {
-        //Self::new(element, self.context)
-        DefaultDeserializer { local: element.local, prefix: element.prefix, level: self.context.stack.len(), done: false, context: self.context }
+        Self::new(element, self.context)
+        //DefaultDeserializer { local: element.local, prefix: element.prefix, level: self.context.stack.len(), done: false, context: self.context }
     }
 
     fn ignore(&mut self) -> Result<(), Error> {
@@ -80,12 +71,27 @@ impl<'cx, 'xml> Deserializer<'cx, 'xml> for DefaultDeserializer<'cx, 'xml> {
             match self.next() {
                 Some(Err(e)) => return Err(e),
                 Some(Ok(Node::Open(element))) => {
-                    let mut nested = self.nested(element);
-                    nested.ignore()?;
+                    //let mut nested = self.nested(element);
+                    //nested.ignore()?;
+                    continue
                 }
                 Some(_) => continue,
                 None => return Ok(()),
             }
+        }
+    }
+
+    fn for_node<'a>(&'a mut self, node: Node<'xml>) -> DefaultDeserializer<'cx, 'xml>
+    where
+        'cx: 'a,
+    {
+        self.context.records.push_front(node);
+        Self {
+            local: self.local,
+            prefix: self.prefix,
+            level: self.level,
+            done: self.done,
+            context: self.context,
         }
     }
 

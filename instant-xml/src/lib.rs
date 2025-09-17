@@ -41,10 +41,10 @@ impl<T: ToXml + ?Sized> ToXml for &T {
 pub trait FromXml<'xml>: Sized {
     fn matches(id: Id<'_>, field: Option<Id<'_>>) -> bool;
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, T: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut T,
     ) -> Result<(), Error>;
 
     type Accumulator: Accumulate<Self>;

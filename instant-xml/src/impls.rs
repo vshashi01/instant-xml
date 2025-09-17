@@ -51,10 +51,10 @@ impl<'xml, T: FromStr> FromXml<'xml> for FromXmlStr<T> {
         }
     }
 
-    fn deserialize(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'_, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -90,10 +90,10 @@ impl<'xml> FromXml<'xml> for bool {
         }
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -186,10 +186,10 @@ macro_rules! from_xml_for_number {
                 }
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> Result<(), Error> {
                 if into.is_some() {
                     return Err(Error::DuplicateValue(field));
@@ -240,10 +240,10 @@ impl<'xml> FromXml<'xml> for char {
         }
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -271,10 +271,10 @@ impl<'xml> FromXml<'xml> for String {
         }
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -301,10 +301,10 @@ impl<'xml, 'a> FromXml<'xml> for Cow<'a, str> {
         }
     }
 
-    fn deserialize(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'_, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.inner.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -349,10 +349,10 @@ where
         T::matches(id, field)
     }
 
-    fn deserialize(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'_, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         let mut value = T::Accumulator::default();
         T::deserialize(&mut value, field, deserializer)?;
@@ -383,10 +383,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Option<T> {
         T::matches(id, field)
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         <T>::deserialize(&mut into.value, field, deserializer)?;
         Ok(())
@@ -527,10 +527,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Box<T> {
         T::matches(id, field)
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
@@ -578,10 +578,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Vec<T> {
         T::matches(id, field)
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         let mut value = T::Accumulator::default();
         T::deserialize(&mut value, field, deserializer)?;
@@ -812,10 +812,10 @@ impl<'xml> FromXml<'xml> for () {
         }
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         _: &'static str,
-        _: &mut DefaultDeserializer<'cx, 'xml>,
+        _: &mut U,
     ) -> Result<(), Error> {
         *into = Some(());
         Ok(())
@@ -844,10 +844,10 @@ impl<'xml> FromXml<'xml> for IpAddr {
         }
     }
 
-    fn deserialize<'cx>(
+    fn deserialize<'cx, U: Deserializer<'cx, 'xml>>(
         into: &mut Self::Accumulator,
         field: &'static str,
-        deserializer: &mut DefaultDeserializer<'cx, 'xml>,
+        deserializer: &mut U,
     ) -> Result<(), Error> {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));

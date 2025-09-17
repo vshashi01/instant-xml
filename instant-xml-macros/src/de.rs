@@ -86,10 +86,10 @@ fn deserialize_scalar_enum(
                 }
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 use ::instant_xml::Error;
 
@@ -188,10 +188,10 @@ fn deserialize_forward_enum(
                 #matches
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 use ::instant_xml::de::Node;
                 use ::instant_xml::{Accumulate, Error, FromXml};
@@ -310,10 +310,10 @@ fn deserialize_struct(
                 id == ::instant_xml::Id { ns: #default_namespace, name: #name }
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 use ::instant_xml::de::Node;
                 use ::instant_xml::{Accumulate, Error, FromXml, Id, Kind};
@@ -497,10 +497,10 @@ fn deserialize_inline_struct(
                 #matches
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 _: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 use ::instant_xml::Kind;
 
@@ -766,10 +766,10 @@ fn deserialize_tuple_struct(
                 id == ::instant_xml::Id { ns: #default_namespace, name: #name }
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 use ::instant_xml::de::Node;
                 use ::instant_xml::{Accumulate, Error, FromXml, Id, Kind};
@@ -844,10 +844,10 @@ fn deserialize_unit_struct(input: &syn::DeriveInput, meta: &ContainerMeta) -> To
                 id == ::instant_xml::Id { ns: #default_namespace, name: #name }
             }
 
-            fn deserialize<'cx>(
+            fn deserialize<'cx, U: ::instant_xml::Deserializer<'cx, 'xml>>(
                 into: &mut Self::Accumulator,
                 field: &'static str,
-                deserializer: &mut ::instant_xml::Deserializer<'cx, 'xml>,
+                deserializer: &mut U,
             ) -> ::std::result::Result<(), ::instant_xml::Error> {
                 deserializer.ignore()?;
                 *into = Some(Self);
