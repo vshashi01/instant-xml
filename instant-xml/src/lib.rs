@@ -45,7 +45,9 @@ pub trait FromXml<'xml>: Sized {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut T,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx;
 
     type Accumulator: Accumulate<Self>;
     const KIND: Kind;

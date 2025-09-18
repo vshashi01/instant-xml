@@ -244,7 +244,10 @@ impl<'xml> FromXml<'xml> for char {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
         }
@@ -353,7 +356,10 @@ where
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         let mut value = T::Accumulator::default();
         T::deserialize(&mut value, field, deserializer)?;
         into.push(value.try_done(field)?);
@@ -387,7 +393,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Option<T> {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         <T>::deserialize(&mut into.value, field, deserializer)?;
         Ok(())
     }
@@ -531,7 +540,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Box<T> {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
         }
@@ -582,7 +594,10 @@ impl<'xml, T: FromXml<'xml>> FromXml<'xml> for Vec<T> {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         let mut value = T::Accumulator::default();
         T::deserialize(&mut value, field, deserializer)?;
         into.push(value.try_done(field)?);
@@ -848,7 +863,10 @@ impl<'xml> FromXml<'xml> for IpAddr {
         into: &mut Self::Accumulator,
         field: &'static str,
         deserializer: &mut U,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error>
+    where
+        'xml: 'cx,
+    {
         if into.is_some() {
             return Err(Error::DuplicateValue(field));
         }
